@@ -139,9 +139,14 @@ export default class MoviesDAO {
     page = 0,
     moviesPerPage = 20,
   } = {}) {
-    if (!filters || !filters.cast) {
-      throw new Error("Must specify cast members to filter by.")
+    try {
+      if (!filters || !filters.cast) {
+        throw new Error("Must specify cast members to filter by.")
+      }
+    } catch (error) {
+      return { error: "Results too large, be more restrictive in filter" }
     }
+
     const matchStage = { $match: filters }
     const sortStage = { $sort: { "tomatoes.viewer.numReviews": -1 } }
     const countingPipeline = [matchStage, sortStage, { $count: "count" }]
@@ -197,6 +202,9 @@ export default class MoviesDAO {
     const queryPipeline = [
       matchStage,
       sortStage,
+      skipStage,
+      limitStage,
+      facetStage,
       // TODO Ticket: Faceted Search
       // Add the stages to queryPipeline in the correct order.
     ]
